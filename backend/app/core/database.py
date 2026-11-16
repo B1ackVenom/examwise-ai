@@ -11,16 +11,28 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import event
 from app.core.config import settings
 
+
+def get_normalized_database_url(url: str) -> str:
+    """Normalize PostgreSQL URLs from cloud providers to use asyncpg driver."""
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://") and "+asyncpg" not in url:
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
+db_url = get_normalized_database_url(settings.database_url)
+
 engine_kwargs: dict = {"echo": settings.app_env == "development"}
-if "sqlite" not in settings.database_url:
+if "sqlite" not in db_url:
     engine_kwargs["pool_pre_ping"] = True
 
 engine = create_async_engine(
-    settings.database_url,
+    db_url,
     **engine_kwargs,
 )
 
-if "sqlite" in settings.database_url:
+if "sqlite" in db_url:
     @event.listens_for(engine.sync_engine, "connect")
     def _set_sqlite_pragmas(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
@@ -47,3 +59,4 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
