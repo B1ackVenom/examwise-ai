@@ -18,4 +18,10 @@ __pycache__/
 *.db-shm
 uploads/
 backend/uploads/
+*.egg-info/
+.coverage
+backend/.coverage
+metadata.json
+bun.lock
+public/assets/aistudio/
 !.env.example
