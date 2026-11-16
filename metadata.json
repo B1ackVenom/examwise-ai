@@ -1,0 +1,6 @@
+{
+  "name": "ExamWise AI",
+  "description": "Modern exam preparation and evaluation platform uniting curriculum study with teacher-assisted answer-sheet grading and marksheet verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

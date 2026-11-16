@@ -1,0 +1,288 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Manrope', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* ProMotor Wow Semantic Tokens (Default Dark Foundation) */
+    --background: 228 33% 3%;
+    --foreground: 210 20% 96%;
+    --card: 228 28% 6%;
+    --card-foreground: 210 20% 96%;
+    --popover: 228 28% 6%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 221 87% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 20% 12%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 228 20% 12%;
+    --muted-foreground: 215 12% 62%;
+    --accent: 221 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    --accent-text: 221 87% 62%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 228 14% 16%;
+    --input: 228 14% 16%;
+    --ring: 221 87% 58%;
+    --chart-1: 221 87% 58%;
+    --chart-2: 221 70% 45%;
+    --chart-3: 215 12% 62%;
+    --chart-4: 228 20% 18%;
+    --chart-5: 0 0% 100%;
+    --radius: 1rem;
+  }
+
+  /* Tokyo Night Mode — Anchored to ProMotor Wow Obsidian & Cobalt Tokens */
+  html.tokyo-night {
+    --background: 228 33% 3%;
+    --foreground: 210 20% 96%;
+    --card: 228 28% 6%;
+    --card-foreground: 210 20% 96%;
+    --popover: 228 28% 6%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 221 87% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 20% 12%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 228 20% 12%;
+    --muted-foreground: 215 12% 62%;
+    --accent: 221 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    --accent-text: 221 87% 62%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 228 14% 16%;
+    --input: 228 14% 16%;
+    --ring: 221 87% 58%;
+    --chart-1: 221 87% 58%;
+    --chart-2: 221 70% 45%;
+    --chart-3: 215 12% 62%;
+    --chart-4: 228 20% 18%;
+    --chart-5: 0 0% 100%;
+
+    --theme-bg: #05060a;
+    --theme-card: #0b0d14;
+    --theme-card-subtle: #181b25;
+    --theme-border: #23262f;
+    --theme-text: #f3f5f7;
+    --theme-text-muted: #939ba8;
+    --theme-accent: #1f60f0;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Dracula Mode — Harmonized Semantic Token Mapping */
+  html.dracula {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+    --card: 232 14% 15%;
+    --card-foreground: 60 30% 96%;
+    --popover: 232 14% 15%;
+    --popover-foreground: 60 30% 96%;
+    --primary: 265 89% 78%;
+    --primary-foreground: 231 15% 14%;
+    --secondary: 232 14% 24%;
+    --secondary-foreground: 60 30% 96%;
+    --muted: 232 14% 24%;
+    --muted-foreground: 225 27% 65%;
+    --accent: 265 65% 65%;
+    --accent-foreground: 231 15% 14%;
+    --accent-text: 265 89% 78%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 232 14% 31%;
+    --input: 232 14% 31%;
+    --ring: 265 89% 78%;
+    --chart-1: 265 89% 78%;
+    --chart-2: 191 97% 77%;
+    --chart-3: 225 27% 65%;
+    --chart-4: 232 14% 28%;
+    --chart-5: 60 30% 96%;
+
+    --theme-bg: #282a36;
+    --theme-card: #21222c;
+    --theme-card-subtle: #343746;
+    --theme-border: #44475a;
+    --theme-text: #f8f8f2;
+    --theme-text-muted: #8b99c9;
+    --theme-accent: #bd93f9;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Clean Light Mode — Complementary Academic Daylight with ProMotor Cobalt Primary */
+  html.light {
+    --background: 220 27% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 87% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 22% 94%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 22% 94%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 221 87% 53%;
+    --accent-foreground: 0 0% 100%;
+    --accent-text: 221 87% 48%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 221 87% 53%;
+    --chart-1: 221 87% 53%;
+    --chart-2: 221 70% 45%;
+    --chart-3: 215 16% 52%;
+    --chart-4: 220 20% 92%;
+    --chart-5: 222 47% 11%;
+
+    --theme-bg: #f5f7fb;
+    --theme-card: #ffffff;
+    --theme-card-subtle: #edf1f7;
+    --theme-border: #dce2ec;
+    --theme-text: #0f172a;
+    --theme-text-muted: #596579;
+    --theme-accent: #1f60f0;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Synchronize dark utility layers seamlessly across dark themes */
+  html.dark .dark\:bg-slate-900 {
+    background-color: hsl(var(--card));
+  }
+  html.dark .dark\:bg-slate-950 {
+    background-color: hsl(var(--background));
+  }
+  html.dark .dark\:bg-slate-800 {
+    background-color: hsl(var(--muted));
+  }
+  html.dark .dark\:bg-slate-800\/40,
+  html.dark .dark\:bg-slate-800\/50,
+  html.dark .dark\:bg-slate-800\/30 {
+    background-color: hsl(var(--muted) / 0.6);
+  }
+  html.dark .dark\:border-slate-800,
+  html.dark .dark\:border-slate-700 {
+    border-color: hsl(var(--border));
+  }
+  html.dark .dark\:text-slate-100,
+  html.dark .dark\:text-slate-200 {
+    color: hsl(var(--foreground));
+  }
+  html.dark .dark\:text-slate-400 {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Semantic Cobalt / Primary Alignment */
+  html.tokyo-night .bg-indigo-600,
+  html.light .bg-indigo-600 {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  html.tokyo-night .hover\:bg-indigo-700:hover,
+  html.light .hover\:bg-indigo-700:hover {
+    background-color: hsl(var(--accent));
+  }
+  html.dracula .bg-indigo-600 {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  html.dracula .hover\:bg-indigo-700:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  html.dark .text-indigo-400,
+  html.dark .dark\:text-indigo-400,
+  html.dark .dark\:text-\[\#7aa2f7\] {
+    color: hsl(var(--accent-text));
+  }
+  html.light .text-indigo-600 {
+    color: hsl(var(--accent-text));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+
+  code, pre, .font-mono, .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Accessible Keyboard Focus Rings */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Gentle Float Micro-Animation */
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-float {
+  animation: floatGentle 4s ease-in-out infinite;
+}
+
+/* Respect user reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
