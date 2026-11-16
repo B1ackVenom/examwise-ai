@@ -17,13 +17,6 @@ import {
   Sparkles,
   ArrowRight,
   AlertCircle,
-  Lock,
-  Mail,
-  User,
-  Building2,
-  Zap,
-  Cpu,
-  CheckCircle2,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -35,7 +28,6 @@ export const LoginPage: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [error, setError] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -56,30 +48,18 @@ export const LoginPage: React.FC = () => {
     (p) => p.id === 'user-tch-01' || p.id === 'user-std-01'
   );
 
-  const executeLogin = (email: string, pass: string) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
-    const res = login(email, pass);
+    const res = login(loginEmail, loginPassword);
     if (!res.success || !res.user) {
-      setError(res.error || 'Authentication failed. Please verify credentials.');
+      setError(res.error || 'Authentication failed.');
       return;
     }
-    success(`Welcome back, ${res.user.name}`);
+    success(`Signed in as ${res.user.name}`);
     navigate(res.user.role === 'teacher' ? '/teacher/overview' : '/student/overview', {
       replace: true,
     });
-  };
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    executeLogin(loginEmail, loginPassword);
-  };
-
-  const handleInstantSignIn = (roleId: string, email: string, pass: string) => {
-    setLoadingRole(roleId);
-    setTimeout(() => {
-      executeLogin(email, pass);
-      setLoadingRole(null);
-    }, 200);
   };
 
   const handleSignupSubmit = (e: React.FormEvent) => {
@@ -100,10 +80,17 @@ export const LoginPage: React.FC = () => {
       setError(res.error || 'Registration failed.');
       return;
     }
-    success(`Workspace created for ${res.user.name}`);
+    success(`Account created for ${res.user.name}`);
     navigate(res.user.role === 'teacher' ? '/teacher/overview' : '/student/overview', {
       replace: true,
     });
+  };
+
+  const handleQuickFill = (email: string, password: string) => {
+    setMode('login');
+    setError('');
+    setLoginEmail(email);
+    setLoginPassword(password);
   };
 
   const themes: { id: Theme; label: string; icon: React.ReactNode }[] = [
@@ -113,41 +100,26 @@ export const LoginPage: React.FC = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col justify-between overflow-hidden selection:bg-[hsl(var(--primary)/0.3)] selection:text-[hsl(var(--foreground))]">
-      {/* Dynamic Ambient Glow Mesh */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[hsl(var(--primary)/0.18)] rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-[140px]" />
-        {/* Subtle grid texture */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-      </div>
-
-      {/* Top Header */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-indigo-600 text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.25)] ring-1 ring-white/20">
+    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col justify-between">
+      {/* Top Bar */}
+      <header className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-sm">
             <GraduationCap className="w-5 h-5" />
-            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full ring-2 ring-[hsl(var(--background))]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-extrabold text-lg tracking-tight text-[hsl(var(--foreground))]">
-                ExamWise<span className="text-[hsl(var(--primary))]">.AI</span>
-              </span>
-              <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                v2.0 PRO
-              </span>
-            </div>
+            <span className="font-display font-bold text-base tracking-tight text-[hsl(var(--foreground))]">
+              ExamWise AI
+            </span>
             <span className="block text-[11px] font-mono text-[hsl(var(--muted-foreground))]">
-              Zero-Hallucination Academic OS
+              Academic Preparation & Evaluation
             </span>
           </div>
         </div>
 
         {/* Theme Switcher */}
         <div
-          className="flex items-center gap-1 p-1 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm backdrop-blur-md"
+          className="flex items-center gap-1 p-1 rounded-lg bg-[hsl(var(--secondary))] border border-[hsl(var(--border))]"
           role="group"
           aria-label="Theme selection"
         >
@@ -158,10 +130,10 @@ export const LoginPage: React.FC = () => {
                 key={t.id}
                 type="button"
                 onClick={() => setTheme(t.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   active
-                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-md font-semibold'
-                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary)/0.5)]'
+                    ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs border border-[hsl(var(--border))]'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
                 }`}
               >
                 {t.icon}
@@ -172,470 +144,417 @@ export const LoginPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
-          {/* Left Column: Sassy Pitch & 1-Click Instant Demo Portals */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.25)] text-xs font-mono font-medium text-[hsl(var(--accent-text))]">
-                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <span>Deterministic NLP + Generative AI</span>
+      {/* Main Auth Grid */}
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Panel: Platform Overview & Quick Seed Accounts */}
+          <div className="lg:col-span-5 space-y-6 pt-2">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-xs font-mono text-[hsl(var(--accent-text))]">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Role-Isolated Workspaces</span>
               </div>
-
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[hsl(var(--foreground))] font-display leading-[1.1]">
-                Academic Rigour,{' '}
-                <span className="bg-gradient-to-r from-[hsl(var(--primary))] via-cyan-400 to-indigo-400 bg-clip-text text-transparent">
-                  Uncompromised.
-                </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))] font-display leading-tight">
+                Sign in to your ExamWise academic workspace
               </h1>
-
-              <p className="text-sm sm:text-base text-[hsl(var(--muted-foreground))] leading-relaxed">
-                Tired of arbitrary grading, spreadsheet arithmetic mistakes, and hallucinated MCQs? ExamWise AI enforces university syllabus partition rules, vector-space semantic grading, and tamper-evident mark audit trails.
+              <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">
+                Students access dedicated subject notebooks, learning resources, and timed practice assessments. Faculty access curriculum setup, exam authoring, OCR booklet grading, and marksheet verification.
               </p>
             </div>
 
-            {/* Instant 1-Click Test Drive Section */}
-            <div className="p-5 rounded-2xl bg-[hsl(var(--card)/0.8)] border border-[hsl(var(--border))] backdrop-blur-xl shadow-xl space-y-3.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider font-mono text-[hsl(var(--foreground))]">
-                    1-Click Instant Demo Portals
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              <div className="p-4 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--foreground))]">
+                  <BookOpen className="w-4 h-4 text-teal-500" />
+                  <span>Student Hub</span>
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  Redirects strictly to student study notebooks, practice tests, and analytics.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--foreground))]">
+                  <ShieldCheck className="w-4 h-4 text-[hsl(var(--accent-text))]" />
+                  <span>Faculty Console</span>
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  Redirects strictly to exam creation, evaluation workbench, and grade publishing.
+                </p>
+              </div>
+            </div>
+
+            {/* Provided 1 Student + 1 Teacher Mock Accounts */}
+            {mockQuickAccounts.length > 0 && (
+              <div className="p-4 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider font-mono text-[hsl(var(--muted-foreground))]">
+                    Default Accounts
+                  </span>
+                  <span className="text-[11px] font-mono text-[hsl(var(--muted-foreground))]">
+                    Click to fill
                   </span>
                 </div>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Ready to test
-                </span>
-              </div>
-
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Explore role-isolated consoles with zero sign-up friction:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Teacher Quick Button */}
-                <button
-                  type="button"
-                  onClick={() => handleInstantSignIn('user-tch-01', 'teacher@examwise.edu', 'password123')}
-                  disabled={loadingRole !== null}
-                  className="group relative p-3.5 rounded-xl border border-[hsl(var(--primary)/0.3)] bg-gradient-to-br from-[hsl(var(--primary)/0.1)] to-[hsl(var(--card))] hover:border-[hsl(var(--primary))] hover:shadow-lg hover:shadow-[hsl(var(--primary)/0.15)] text-left transition-all duration-200 cursor-pointer overflow-hidden"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--accent-text))]">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--accent-text))] transition-colors">
-                          Dr. Elena Mercer
+                <div className="space-y-2">
+                  {mockQuickAccounts.map((acc) => (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => handleQuickFill(acc.email, acc.password || 'password123')}
+                      className="w-full p-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.5)] hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--secondary))] text-left transition-colors flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">
+                            {acc.name}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border ${
+                              acc.role === 'teacher'
+                                ? 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--accent-text))] border-[hsl(var(--primary)/0.3)]'
+                                : 'bg-teal-500/10 text-teal-500 border-teal-500/30'
+                            }`}
+                          >
+                            {acc.role}
+                          </span>
                         </div>
-                        <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                          Faculty Examiner
+                        <div className="text-[11px] font-mono text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+                          {acc.email} · {acc.password || 'password123'}
                         </div>
                       </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                    <span>teacher@examwise.edu</span>
-                    <span className="text-[hsl(var(--accent-text))] font-bold group-hover:underline">Launch →</span>
-                  </div>
-                </button>
-
-                {/* Student Quick Button */}
-                <button
-                  type="button"
-                  onClick={() => handleInstantSignIn('user-std-01', 'student@examwise.edu', 'password123')}
-                  disabled={loadingRole !== null}
-                  className="group relative p-3.5 rounded-xl border border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-[hsl(var(--card))] hover:border-teal-400 hover:shadow-lg hover:shadow-teal-500/15 text-left transition-all duration-200 cursor-pointer overflow-hidden"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-teal-500/20 text-teal-400">
-                        <BookOpen className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-[hsl(var(--foreground))] group-hover:text-teal-400 transition-colors">
-                          Alex Morgan
-                        </div>
-                        <div className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                          Student Scholar
-                        </div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between text-[10px] font-mono text-[hsl(var(--muted-foreground))]">
-                    <span>student@examwise.edu</span>
-                    <span className="text-teal-400 font-bold group-hover:underline">Launch →</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Feature Highlights Grid */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-xl bg-[hsl(var(--secondary)/0.4)] border border-[hsl(var(--border))]">
-                <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--foreground))]">
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Dual NLP Grading</span>
+                      <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />
+                    </button>
+                  ))}
                 </div>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-1 leading-relaxed">
-                  Cosine similarity vector space + LLM rubric reasoning.
-                </p>
               </div>
-              <div className="p-3 rounded-xl bg-[hsl(var(--secondary)/0.4)] border border-[hsl(var(--border))]">
-                <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--foreground))]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Zero-MCQ Rigor</span>
-                </div>
-                <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-1 leading-relaxed">
-                  Mid/End-Term papers with strict module mark bounds.
-                </p>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Right Column: Sleek Glassmorphic Form Card */}
-          <div className="lg:col-span-7">
-            <div className="relative rounded-3xl bg-[hsl(var(--card)/0.85)] border border-[hsl(var(--border))] backdrop-blur-2xl p-6 sm:p-10 shadow-2xl ring-1 ring-white/5">
-              
-              {/* Tab Selector */}
-              <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] mb-8">
+          {/* Right Panel: Auth Card */}
+          <div className="lg:col-span-7 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 sm:p-8 shadow-sm">
+            {/* Mode Switcher */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setError('');
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
+                  mode === 'login'
+                    ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs border border-[hsl(var(--border))]'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                }`}
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Log In</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signup');
+                  setError('');
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
+                  mode === 'signup'
+                    ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-xs border border-[hsl(var(--border))]'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Sign Up</span>
+              </button>
+            </div>
+
+            {error && (
+              <div className="mb-5 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {mode === 'login' ? (
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold text-[hsl(var(--foreground))] font-display">
+                    Account Log In
+                  </h2>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                    Enter your registered email and password to open your workspace.
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="login-email"
+                    className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5"
+                  >
+                    Email Address *
+                  </label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="login-password"
+                    className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5"
+                  >
+                    Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="current-password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-1"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => {
-                    setMode('login');
-                    setError('');
-                  }}
-                  className={`py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    mode === 'login'
-                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md border border-[hsl(var(--border))] ring-1 ring-black/5'
-                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                  }`}
+                  type="submit"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] text-sm font-semibold transition-colors flex items-center justify-center gap-2 mt-2"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Sign In</span>
+                  <span>Log In to Workspace</span>
                 </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignupSubmit} className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold text-[hsl(var(--foreground))] font-display">
+                    Create Profile Account
+                  </h2>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                    Register a new student or faculty account. Your workspace is locked to your chosen role.
+                  </p>
+                </div>
+
+                {/* Role Selection */}
+                <div>
+                  <span className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+                    Account Role *
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSignupRole('student')}
+                      className={`p-3 rounded-xl border text-left transition-colors ${
+                        signupRole === 'student'
+                          ? 'border-teal-500 bg-teal-500/10 text-teal-400'
+                          : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))]'
+                      }`}
+                    >
+                      <div className="text-xs font-bold flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4" />
+                        <span>Student</span>
+                      </div>
+                      <div className="text-[11px] opacity-80 mt-0.5">
+                        Study notebooks & practice
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSignupRole('teacher')}
+                      className={`p-3 rounded-xl border text-left transition-colors ${
+                        signupRole === 'teacher'
+                          ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--accent-text))]'
+                          : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))]'
+                      }`}
+                    >
+                      <div className="text-xs font-bold flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Faculty / Teacher</span>
+                      </div>
+                      <div className="text-[11px] opacity-80 mt-0.5">
+                        Exams & OCR evaluation
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="signup-name"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      Full Name *
+                    </label>
+                    <input
+                      id="signup-name"
+                      type="text"
+                      required
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="signup-email"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      Email Address *
+                    </label>
+                    <input
+                      id="signup-email"
+                      type="email"
+                      required
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="signup-password"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      Password * (min 4 characters)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="signup-password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={4}
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        className="w-full px-3 py-2 pr-9 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-1"
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="signup-role-label"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      {signupRole === 'teacher' ? 'Academic Title' : 'Program / Standing'}
+                    </label>
+                    <input
+                      id="signup-role-label"
+                      type="text"
+                      value={signupRoleLabel}
+                      onChange={(e) => setSignupRoleLabel(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="signup-department"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      Department
+                    </label>
+                    <input
+                      id="signup-department"
+                      type="text"
+                      value={signupDepartment}
+                      onChange={(e) => setSignupDepartment(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="signup-institution"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      Institution
+                    </label>
+                    <input
+                      id="signup-institution"
+                      type="text"
+                      value={signupInstitution}
+                      onChange={(e) => setSignupInstitution(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {signupRole === 'student' && (
+                    <div>
+                      <label
+                        htmlFor="signup-semester"
+                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                      >
+                        Current Semester
+                      </label>
+                      <input
+                        id="signup-semester"
+                        type="text"
+                        value={signupSemester}
+                        onChange={(e) => setSignupSemester(e.target.value)}
+                        className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                      />
+                    </div>
+                  )}
+                  <div className={signupRole === 'teacher' ? 'sm:col-span-2' : ''}>
+                    <label
+                      htmlFor="signup-specialization"
+                      className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
+                    >
+                      {signupRole === 'teacher' ? 'Research / Subject Area' : 'Study Track'}
+                    </label>
+                    <input
+                      id="signup-specialization"
+                      type="text"
+                      value={signupSpecialization}
+                      onChange={(e) => setSignupSpecialization(e.target.value)}
+                      className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.6)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    />
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => {
-                    setMode('signup');
-                    setError('');
-                  }}
-                  className={`py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    mode === 'signup'
-                      ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md border border-[hsl(var(--border))] ring-1 ring-black/5'
-                      : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
-                  }`}
+                  type="submit"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] text-sm font-semibold transition-colors flex items-center justify-center gap-2 mt-2"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>Create Account</span>
+                  <span>Create Account & Enter Workspace</span>
                 </button>
-              </div>
-
-              {/* Error Banner */}
-              {error && (
-                <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs sm:text-sm flex items-center gap-2.5 animate-shake">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span className="font-medium">{error}</span>
-                </div>
-              )}
-
-              {/* Login Mode */}
-              {mode === 'login' ? (
-                <form onSubmit={handleLoginSubmit} className="space-y-5">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-[hsl(var(--foreground))] font-display">
-                      Welcome to your Workspace
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                      Enter your institutional credentials or test-drive using the 1-click portals.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="login-email"
-                        className="block text-xs font-bold tracking-wide uppercase font-mono text-[hsl(var(--foreground))] mb-1.5"
-                      >
-                        Institutional Email
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="login-email"
-                          type="email"
-                          required
-                          autoComplete="email"
-                          placeholder="e.g. teacher@examwise.edu"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          className="w-full pl-10 pr-3.5 py-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label
-                          htmlFor="login-password"
-                          className="block text-xs font-bold tracking-wide uppercase font-mono text-[hsl(var(--foreground))]"
-                        >
-                          Password
-                        </label>
-                        <span className="text-[11px] font-mono text-[hsl(var(--muted-foreground))]">
-                          Default: password123
-                        </span>
-                      </div>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="login-password"
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          autoComplete="current-password"
-                          placeholder="••••••••••••"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          className="w-full pl-10 pr-11 py-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] p-1 transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 hover:from-[hsl(var(--primary))] hover:to-indigo-500 text-[hsl(var(--primary-foreground))] text-sm font-bold tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.25)] hover:shadow-[hsl(var(--primary)/0.4)] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-3"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    <span>Launch Workspace</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </button>
-                </form>
-              ) : (
-                /* Signup Mode */
-                <form onSubmit={handleSignupSubmit} className="space-y-4">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-[hsl(var(--foreground))] font-display">
-                      Create Your Profile
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                      Choose your academic discipline and role. Workspaces are tailored specifically to your function.
-                    </p>
-                  </div>
-
-                  {/* Role Cards */}
-                  <div>
-                    <span className="block text-xs font-bold tracking-wide uppercase font-mono text-[hsl(var(--foreground))] mb-2">
-                      Academic Designation *
-                    </span>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSignupRole('student')}
-                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          signupRole === 'student'
-                            ? 'border-teal-400 bg-teal-500/10 text-teal-400 shadow-sm ring-1 ring-teal-500/20'
-                            : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
-                        }`}
-                      >
-                        <div className="text-xs font-bold flex items-center gap-2">
-                          <BookOpen className="w-4 h-4" />
-                          <span>Student Scholar</span>
-                        </div>
-                        <div className="text-[11px] opacity-80 mt-1">
-                          Cornell notes & practice assessments
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setSignupRole('teacher')}
-                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          signupRole === 'teacher'
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--accent-text))] shadow-sm ring-1 ring-[hsl(var(--primary)/0.2)]'
-                            : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
-                        }`}
-                      >
-                        <div className="text-xs font-bold flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4" />
-                          <span>Faculty Examiner</span>
-                        </div>
-                        <div className="text-[11px] opacity-80 mt-1">
-                          Curriculum authoring & dual-engine grading
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Name and Email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        htmlFor="signup-name"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        Full Name *
-                      </label>
-                      <div className="relative">
-                        <User className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="signup-name"
-                          type="text"
-                          required
-                          placeholder="e.g. Prof. Alan Turing"
-                          value={signupName}
-                          onChange={(e) => setSignupName(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="signup-email"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        Institutional Email *
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="signup-email"
-                          type="email"
-                          required
-                          placeholder="you@university.edu"
-                          value={signupEmail}
-                          onChange={(e) => setSignupEmail(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Password & Title */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        htmlFor="signup-password"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        Password * (min 4 chars)
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="signup-password"
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          minLength={4}
-                          placeholder="••••••••"
-                          value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
-                          className="w-full pl-9 pr-8 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                        >
-                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="signup-role-label"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        {signupRole === 'teacher' ? 'Academic Title' : 'Current Standing'}
-                      </label>
-                      <input
-                        id="signup-role-label"
-                        type="text"
-                        placeholder={signupRole === 'teacher' ? 'Associate Professor' : 'Undergraduate Senior'}
-                        value={signupRoleLabel}
-                        onChange={(e) => setSignupRoleLabel(e.target.value)}
-                        className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Department & Institution */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        htmlFor="signup-department"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        Department
-                      </label>
-                      <div className="relative">
-                        <Building2 className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
-                        <input
-                          id="signup-department"
-                          type="text"
-                          placeholder="Computer Science & Eng"
-                          value={signupDepartment}
-                          onChange={(e) => setSignupDepartment(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="signup-institution"
-                        className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1"
-                      >
-                        Institution
-                      </label>
-                      <input
-                        id="signup-institution"
-                        type="text"
-                        placeholder="ExamWise Institute of Tech"
-                        value={signupInstitution}
-                        onChange={(e) => setSignupInstitution(e.target.value)}
-                        className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-xl text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 hover:from-[hsl(var(--primary))] hover:to-indigo-500 text-[hsl(var(--primary-foreground))] text-sm font-bold tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.25)] transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    <span>Create Profile & Launch Workspace</span>
-                  </button>
-                </form>
-              )}
-            </div>
+              </form>
+            )}
           </div>
         </div>
       </main>
 
-      {/* Sassy, Professional Footer */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border)/0.5)]">
-        <div className="flex items-center gap-2 font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>System Status: All Engines Operational · 54/54 Verifications Passed</span>
-        </div>
-        <div className="font-mono text-[11px]">
-          ExamWise AI · Built for Educational Rigor & Algorithmic Fairness
-        </div>
+      <footer className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-[hsl(var(--muted-foreground))]">
+        ExamWise AI · Academic Preparation & Evaluation Platform
       </footer>
     </div>
   );
