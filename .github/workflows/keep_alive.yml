@@ -1,0 +1,18 @@
+name: Render 24/7 Keep-Alive
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free instance from spinning down
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ExamWise AI Health Endpoint
+        run: |
+          # Replace with your actual Render URL (e.g. https://examwise-ai.onrender.com/health)
+          RENDER_URL="${{ secrets.RENDER_APP_URL || 'https://examwise-ai.onrender.com/health' }}"
+          echo "Pinging: ${RENDER_URL}"
+          curl -s -f -m 15 "${RENDER_URL}" || echo "Server is waking up..."
