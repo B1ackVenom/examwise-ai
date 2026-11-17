@@ -106,6 +106,15 @@ export const NotebookDetailView: React.FC<NotebookDetailViewProps> = ({
     onUpdate();
   };
 
+  const handleUpdatePageContent = (newContent: string) => {
+    if (!currentPage) return;
+    notebookService.updatePageInNotebook(notebook.id, currentPage.id, {
+      mainContent: newContent,
+    });
+    success('Mermaid diagram auto-fixed & saved to notebook page.');
+    onUpdate();
+  };
+
   const handleAddSticky = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStickyText.trim()) return;
@@ -332,7 +341,10 @@ export const NotebookDetailView: React.FC<NotebookDetailViewProps> = ({
                       Lecture Notes & Visual Models
                     </div>
                     <div className="text-xs text-slate-900 leading-relaxed font-normal">
-                      <MermaidContentRenderer content={currentPage.mainContent} />
+                      <MermaidContentRenderer
+                        content={currentPage.mainContent}
+                        onUpdateContent={handleUpdatePageContent}
+                      />
                     </div>
                   </div>
                 </div>
