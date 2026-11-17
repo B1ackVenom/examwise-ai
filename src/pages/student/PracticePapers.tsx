@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiClient } from '../../services/apiClient';
 import { PracticePaper, PracticeAttempt } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { Modal } from '../../components/ui/Modal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import {
+  exportPracticePaperToDoc,
+  exportPracticePaperToMarkdown,
+  exportPracticePaperToPdf,
+} from '../../utils/exportUtils';
 import {
   FileText,
   Clock,
@@ -13,8 +18,14 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   Loader2,
+  Download,
+  Printer,
+  FileCode,
+  Sliders,
+  Settings2,
 } from 'lucide-react';
 
 export const PracticePapers: React.FC = () => {
@@ -29,14 +40,51 @@ export const PracticePapers: React.FC = () => {
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
   const [latestAttempt, setLatestAttempt] = useState<PracticeAttempt | null>(null);
 
-  // AI Generation Modal State
+  // AI Generation Modal State with configurable Marks per Q and Max per Module
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [genCourseId, setGenCourseId] = useState(courses[0]?.id || 'crs-cse2003');
   const [genExamType, setGenExamType] = useState<'mid_term' | 'end_term'>('mid_term');
   const [genTitle, setGenTitle] = useState('');
+  const [genMarksPerQuestion, setGenMarksPerQuestion] = useState<number>(5);
+  const [genMaxMarksPerModule, setGenMaxMarksPerModule] = useState<number>(10);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Export Paper Dropdown State
+  const [openExportMenuId, setOpenExportMenuId] = useState<string | null>(null);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setOpenExportMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const { success } = useToast();
+
+  const handleExportPaperDoc = (paper: PracticePaper) => {
+    const course = courses.find((c) => c.id === paper.courseId);
+    exportPracticePaperToDoc(paper, course ? `${course.code}: ${course.title}` : undefined);
+    setOpenExportMenuId(null);
+    success(`Exported "${paper.title}" to Word Document (.doc)`);
+  };
+
+  const handleExportPaperMarkdown = (paper: PracticePaper) => {
+    const course = courses.find((c) => c.id === paper.courseId);
+    exportPracticePaperToMarkdown(paper, course ? `${course.code}: ${course.title}` : undefined);
+    setOpenExportMenuId(null);
+    success(`Exported "${paper.title}" to Markdown (.md)`);
+  };
+
+  const handleExportPaperPdf = (paper: PracticePaper) => {
+    const course = courses.find((c) => c.id === paper.courseId);
+    exportPracticePaperToPdf(paper, course ? `${course.code}: ${course.title}` : undefined);
+    setOpenExportMenuId(null);
+    success(`Opening printable university examination paper PDF...`);
+  };
 
   const handleGeneratePaper = async () => {
     setIsGenerating(true);
@@ -44,13 +92,18 @@ export const PracticePapers: React.FC = () => {
       const newPaper = await apiClient.generatePracticePaperAI(
         genCourseId,
         genExamType,
-        genTitle.trim() || undefined
+        genTitle.trim() || undefined,
+        undefined,
+        {
+          marksPerQuestion: genMarksPerQuestion,
+          maxMarksPerModule: genMaxMarksPerModule,
+        }
       );
       if (newPaper) {
         setPapers(apiClient.getPracticePapers());
         setIsGenerateModalOpen(false);
         setGenTitle('');
-        success(`New ${genExamType === 'mid_term' ? 'Mid-Term' : 'End-Term'} practice paper generated!`);
+        success(`New ${genExamType === 'mid_term' ? 'Mid-Term' : 'End-Term'} paper generated (${newPaper.totalMarks}M total, ${genMarksPerQuestion}M/Q)!`);
       }
     } catch {
       setPapers(apiClient.getPracticePapers());
@@ -527,13 +580,67 @@ export const PracticePapers: React.FC = () => {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => handleStartPracticeFlow(paper)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-medium shadow-xs transition-colors"
-                      >
-                        <Play className="w-3.5 h-3.5" />
-                        <span>{hasAttempts ? 'Retake Paper' : 'Start Practice Paper'}</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {/* Multi-format Export Dropdown for Predicted Paper */}
+                        <div className="relative" ref={openExportMenuId === paper.id ? exportDropdownRef : null}>
+                          <button
+                            type="button"
+                            onClick={() => setOpenExportMenuId(openExportMenuId === paper.id ? null : paper.id)}
+                            className="flex items-center gap-1.5 px-3 py-2 border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                            title="Export paper to DOC, PDF, or Markdown"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Export Paper</span>
+                            <ChevronDown className="w-3 h-3 opacity-70" />
+                          </button>
+
+                          {openExportMenuId === paper.id && (
+                            <div className="absolute right-0 bottom-full mb-1 w-52 bg-[hsl(var(--popover))] text-[hsl(var(--popover-foreground))] rounded-xl shadow-xl border border-[hsl(var(--border))] py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                              <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                Export Paper As
+                              </div>
+                              <button
+                                onClick={() => handleExportPaperDoc(paper)}
+                                className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                              >
+                                <FileText className="w-4 h-4 text-blue-500" />
+                                <div>
+                                  <div className="font-semibold">Word Document (.doc)</div>
+                                  <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Official question paper format</div>
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleExportPaperPdf(paper)}
+                                className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                              >
+                                <Printer className="w-4 h-4 text-emerald-500" />
+                                <div>
+                                  <div className="font-semibold">Printable Exam (PDF)</div>
+                                  <div className="text-[10px] text-[hsl(var(--muted-foreground))]">University exam paper layout</div>
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleExportPaperMarkdown(paper)}
+                                className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                              >
+                                <FileCode className="w-4 h-4 text-purple-500" />
+                                <div>
+                                  <div className="font-semibold">Markdown (.md)</div>
+                                  <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Raw text with questions & answers</div>
+                                </div>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleStartPracticeFlow(paper)}
+                          className="flex items-center gap-1.5 px-3.5 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          <span>{hasAttempts ? 'Retake Paper' : 'Start Practice Paper'}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -556,7 +663,7 @@ export const PracticePapers: React.FC = () => {
               <div>Duration: <strong className="text-[hsl(var(--foreground))]">{activePaper?.durationMinutes} Minutes</strong></div>
               <div>Total Marks: <strong className="text-[hsl(var(--foreground))] font-mono">{activePaper?.totalMarks}</strong></div>
               <div>Questions: <strong className="text-[hsl(var(--foreground))]">{activePaper?.questionCount}</strong></div>
-              <div>Format: <strong className="text-[hsl(var(--foreground))]">MCQ & Short Answer</strong></div>
+              <div>Format: <strong className="text-[hsl(var(--foreground))]">Descriptive (Zero-MCQ Standard)</strong></div>
             </div>
           </div>
 
@@ -569,19 +676,44 @@ export const PracticePapers: React.FC = () => {
             </ul>
           </div>
 
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-[hsl(var(--border))]">
-            <button
-              onClick={() => setIsInstructionsOpen(false)}
-              className="px-3.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleBeginAssessment}
-              className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] font-medium transition-colors"
-            >
-              Begin Practice Session
-            </button>
+          <div className="pt-3 flex items-center justify-between gap-2 border-t border-[hsl(var(--border))]">
+            {activePaper && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleExportPaperPdf(activePaper)}
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Print official question paper"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Paper</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportPaperDoc(activePaper)}
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Export to Word"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>DOC</span>
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsInstructionsOpen(false)}
+                className="px-3.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBeginAssessment}
+                className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] font-medium transition-colors"
+              >
+                Begin Practice Session
+              </button>
+            </div>
           </div>
         </div>
       </Modal>
@@ -596,7 +728,7 @@ export const PracticePapers: React.FC = () => {
         variant="primary"
       />
 
-      {/* AI Practice Paper Generation Modal */}
+      {/* AI Practice Paper Generation Modal with Marks per Q & Max per Module */}
       <Modal
         isOpen={isGenerateModalOpen}
         onClose={() => !isGenerating && setIsGenerateModalOpen(false)}
@@ -632,7 +764,10 @@ export const PracticePapers: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setGenExamType('mid_term')}
+                onClick={() => {
+                  setGenExamType('mid_term');
+                  setGenMaxMarksPerModule(12);
+                }}
                 className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                   genExamType === 'mid_term'
                     ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--primary)/0.3)]'
@@ -646,7 +781,10 @@ export const PracticePapers: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setGenExamType('end_term')}
+                onClick={() => {
+                  setGenExamType('end_term');
+                  setGenMaxMarksPerModule(10);
+                }}
                 className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                   genExamType === 'end_term'
                     ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--primary)/0.3)]'
@@ -655,8 +793,93 @@ export const PracticePapers: React.FC = () => {
               >
                 <div className="text-xs font-bold">End-Term Comprehensive</div>
                 <div className="text-[11px] font-mono opacity-80 mt-1">50 Marks · 120 Mins</div>
-                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">All 5 Modules (10M each)</div>
+                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">All 5 Modules Cap</div>
               </button>
+            </div>
+          </div>
+
+          {/* User Choosable Marks Per Question & Max Marks Per Module */}
+          <div className="p-3.5 rounded-xl bg-[hsl(var(--secondary)/0.3)] border border-[hsl(var(--border))] space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--foreground))]">
+              <Sliders className="w-3.5 h-3.5 text-[hsl(var(--accent-text))]" />
+              <span>Marking Blueprint Customization</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Marks per Question */}
+              <div>
+                <label className="block text-[11px] font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                  Marks per Question: <strong className="text-[hsl(var(--foreground))] font-mono">{genMarksPerQuestion} Marks</strong>
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[5, 6, 10].map((marks) => (
+                    <button
+                      key={marks}
+                      type="button"
+                      onClick={() => setGenMarksPerQuestion(marks)}
+                      className={`px-2.5 py-1 text-xs rounded-lg font-mono font-semibold transition-colors cursor-pointer ${
+                        genMarksPerQuestion === marks
+                          ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xs'
+                          : 'bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary)/0.8)]'
+                      }`}
+                    >
+                      {marks}M
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min={2}
+                    max={20}
+                    value={genMarksPerQuestion}
+                    onChange={(e) => setGenMarksPerQuestion(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-16 px-2 py-1 bg-[hsl(var(--card))] border border-[hsl(var(--input))] rounded-lg text-xs font-mono text-center text-[hsl(var(--foreground))]"
+                    placeholder="Custom"
+                    title="Custom marks per question"
+                  />
+                </div>
+              </div>
+
+              {/* Max Marks per Module */}
+              <div>
+                <label className="block text-[11px] font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                  Max Cap per Module: <strong className="text-[hsl(var(--foreground))] font-mono">{genMaxMarksPerModule} Marks</strong>
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[10, 12, 15].map((cap) => (
+                    <button
+                      key={cap}
+                      type="button"
+                      onClick={() => setGenMaxMarksPerModule(cap)}
+                      className={`px-2.5 py-1 text-xs rounded-lg font-mono font-semibold transition-colors cursor-pointer ${
+                        genMaxMarksPerModule === cap
+                          ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xs'
+                          : 'bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary)/0.8)]'
+                      }`}
+                    >
+                      {cap}M
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min={5}
+                    max={30}
+                    value={genMaxMarksPerModule}
+                    onChange={(e) => setGenMaxMarksPerModule(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-16 px-2 py-1 bg-[hsl(var(--card))] border border-[hsl(var(--input))] rounded-lg text-xs font-mono text-center text-[hsl(var(--foreground))]"
+                    placeholder="Custom"
+                    title="Custom max marks per module"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2 rounded-lg bg-[hsl(var(--secondary)/0.5)] text-[11px] text-[hsl(var(--muted-foreground))] flex items-center justify-between">
+              <span>
+                Blueprint: {genExamType === 'mid_term' ? '2 Modules' : '5 Modules'} · {genMarksPerQuestion}M/Q · Max {genMaxMarksPerModule}M/Module
+              </span>
+              <span className="font-mono font-bold text-[hsl(var(--foreground))]">
+                Target: {genExamType === 'mid_term' ? 2 * genMaxMarksPerModule : 5 * genMaxMarksPerModule} Marks
+              </span>
             </div>
           </div>
 

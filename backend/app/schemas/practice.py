@@ -73,6 +73,8 @@ class GeneratePracticePaperRequest(BaseModel):
     mcq_count: int = Field(default=5, ge=0, le=30)
     short_answer_count: int = Field(default=3, ge=0, le=15)
     module_ids: list[str] = Field(default_factory=list)
+    marks_per_question: int | None = Field(default=None, ge=1, le=50)
+    max_marks_per_module: int | None = Field(default=None, ge=1, le=50)
 
 
 class PracticePaperResponse(BaseModel):

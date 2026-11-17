@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SubjectNotebook, NotebookPage, NotebookStickyNote } from '../../types';
 import { notebookService } from '../../services/notebookService';
+import { MermaidContentRenderer } from './MermaidRenderer';
 import { PomodoroTimer } from '../shared/PomodoroTimer';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { useToast } from '../../context/ToastContext';
@@ -232,7 +233,7 @@ export const NotebookDetailView: React.FC<NotebookDetailViewProps> = ({
             {currentPage && (
               <div className="flex items-center gap-2 truncate">
                 <span className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-                  {currentPage.unitOrChapter} · {currentPage.date}
+                  {currentPage.unitOrChapter} · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
 
                 <button
@@ -295,13 +296,13 @@ export const NotebookDetailView: React.FC<NotebookDetailViewProps> = ({
 
               {/* Main Paper Content Container (Offset by red margin line at 65px) */}
               <div className="pl-20 pr-6 py-6 space-y-6">
-                {/* Page Header Strip */}
+                {/* Page Header Strip with dynamically synced system date */}
                 <div className="border-b-2 border-slate-300 pb-3">
                   <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
                     <span className="font-bold uppercase tracking-wider text-indigo-700">
                       {notebook.subjectCode} · {currentPage.unitOrChapter}
                     </span>
-                    <span>Date: {currentPage.date}</span>
+                    <span>Date: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 mt-1 font-display tracking-tight">
                     {currentPage.title}
@@ -325,13 +326,13 @@ export const NotebookDetailView: React.FC<NotebookDetailViewProps> = ({
                     </ul>
                   </div>
 
-                  {/* Right: Main Ruled Lecture Notes */}
+                  {/* Right: Main Ruled Lecture Notes with Mermaid Diagram Support */}
                   <div className="md:col-span-8 space-y-3">
                     <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Lecture Notes & Derivations
+                      Lecture Notes & Visual Models
                     </div>
-                    <div className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed font-normal">
-                      {currentPage.mainContent}
+                    <div className="text-xs text-slate-900 leading-relaxed font-normal">
+                      <MermaidContentRenderer content={currentPage.mainContent} />
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRole } from '../../context/RoleContext';
@@ -35,6 +35,12 @@ export const FloatingDock: React.FC<FloatingDockProps> = ({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  useEffect(() => {
+    const handleToggle = () => setIsMinimized((prev) => !prev);
+    window.addEventListener('examwise:toggle-dock', handleToggle);
+    return () => window.removeEventListener('examwise:toggle-dock', handleToggle);
+  }, []);
+
   const teacherDockItems = [
     { to: '/teacher/overview', label: 'Overview', icon: LayoutDashboard },
     { to: '/teacher/evaluation', label: 'Evaluation Workbench', icon: FileCheck2 },
@@ -64,10 +70,11 @@ export const FloatingDock: React.FC<FloatingDockProps> = ({
           animate={{ scale: 1, opacity: 1 }}
           onClick={() => setIsMinimized(false)}
           className="px-3.5 py-2.5 rounded-full bg-[hsl(var(--card)/0.95)] text-[hsl(var(--foreground))] backdrop-blur-md border border-[hsl(var(--border))] shadow-lg hover:border-[hsl(var(--ring)/0.5)] transition-colors flex items-center gap-2 group cursor-pointer"
-          title="Expand Quick Dock"
+          title="Expand Quick Dock (Ctrl + D)"
         >
           <Sparkles className="w-4 h-4 text-[hsl(var(--accent-text))]" />
           <span className="text-xs font-semibold pr-1">Quick Dock</span>
+          <kbd className="hidden sm:inline text-[10px] font-mono px-1 py-0.5 rounded bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">Ctrl+D</kbd>
           <ChevronUp className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
         </motion.button>
       </div>

@@ -670,8 +670,16 @@ class ExamWiseApiClient {
     courseId: string,
     examType: 'mid_term' | 'end_term',
     title?: string,
-    focusModules?: string[]
+    focusModules?: string[],
+    config?: {
+      marksPerQuestion?: number;
+      maxMarksPerModule?: number;
+      totalMarks?: number;
+    }
   ): Promise<PracticePaper | null> {
+    const marksPerQ = config?.marksPerQuestion || (examType === 'mid_term' ? 5 : 5);
+    const maxMarksPerMod = config?.maxMarksPerModule || (examType === 'mid_term' ? 12 : 10);
+
     try {
       const response = await this.request<any>('/practice-papers/generate', {
         method: 'POST',
@@ -680,6 +688,9 @@ class ExamWiseApiClient {
           exam_type: examType,
           title: title || `${examType === 'mid_term' ? 'Mid-Term' : 'End-Term'} AI Generated Practice Paper`,
           focus_modules: focusModules,
+          marks_per_question: marksPerQ,
+          max_marks_per_module: maxMarksPerMod,
+          total_marks: config?.totalMarks,
         }),
       });
 
@@ -688,7 +699,7 @@ class ExamWiseApiClient {
           id: response.id,
           courseId: response.course_id,
           title: response.title,
-          description: `Comprehensive AI-generated examination (${examType.toUpperCase()}) covering all prescribed modules without MCQs.`,
+          description: `Comprehensive AI-generated examination (${examType.toUpperCase()}) covering prescribed modules without MCQs.`,
           durationMinutes: response.duration_minutes || (examType === 'mid_term' ? 60 : 120),
           totalMarks: response.total_marks || (examType === 'mid_term' ? 25 : 50),
           questionCount: response.questions?.length || 0,
@@ -723,111 +734,122 @@ class ExamWiseApiClient {
     const paperId = `pp-ai-${Date.now()}`;
     const paperTitle = title || `${course?.code || 'CSE'} ${isMidTerm ? 'Mid-Term' : 'End-Term'} AI Practice Paper`;
 
+    // Dynamic question synthesis respecting marksPerQuestion & maxMarksPerModule
+    let synthesizedQuestions: PracticePaper['questions'] = [];
+    if (isMidTerm) {
+      // 2 Modules (e.g. Mod 1 & Mod 2)
+      // If marksPerQ is 5, Module 1 has 2 questions (5M + 5M = 10M), Module 2 has 2-3 questions
+      synthesizedQuestions = [
+        {
+          id: `${paperId}-q1`,
+          paperId,
+          questionNumber: 1,
+          questionText: `[Module 1 - Cap ${maxMarksPerMod}M] Explain the foundational principles and algorithmic architecture of ${course?.title || 'the domain'}. Differentiate theoretical models from practical constraints.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Requires comprehensive definition of components, architectural layers, interface contracts, and trade-off analysis.',
+          explanation: `Module 1 allocation (${marksPerQ} Marks). Assesses understanding and technical precision.`,
+        },
+        {
+          id: `${paperId}-q2`,
+          paperId,
+          questionNumber: 2,
+          questionText: `[Module 1 - Cap ${maxMarksPerMod}M] Formulate the mathematical invariants or algorithmic complexity bounds for fundamental operations in this curriculum. State all boundary conditions.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Requires exact asymptotic notations (Big-O, Omega, Theta), recurrence derivations, or algebraic proofs.',
+          explanation: `Module 1 allocation (${marksPerQ} Marks). Assesses analytical reasoning.`,
+        },
+        {
+          id: `${paperId}-q3`,
+          paperId,
+          questionNumber: 3,
+          questionText: `[Module 2 - Cap ${maxMarksPerMod}M] Given a concurrent or multi-threaded workload, demonstrate how synchronization hazards, data anomalies, or race conditions are formally eliminated.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Demonstrates protocol adherence (e.g. 2PL, Peterson algorithm, or ACID transaction guarantees).',
+          explanation: `Module 2 allocation (${marksPerQ} Marks). Assesses concurrency and correctness.`,
+        },
+        {
+          id: `${paperId}-q4`,
+          paperId,
+          questionNumber: 4,
+          questionText: `[Module 2 - Cap ${maxMarksPerMod}M] Design an end-to-end relational schema, data structure, or algorithm satisfying strict performance requirements and normalization standards.`,
+          type: 'short_answer',
+          marks: Math.min(marksPerQ, maxMarksPerMod),
+          correctAnswer: 'Complete design schema with entity constraints, functional dependency mapping, and decomposition verification.',
+          explanation: `Module 2 allocation (${Math.min(marksPerQ, maxMarksPerMod)} Marks). Assesses system design and synthesis.`,
+        },
+      ];
+    } else {
+      // 5 Modules (End-term comprehensive)
+      synthesizedQuestions = [
+        {
+          id: `${paperId}-q1`,
+          paperId,
+          questionNumber: 1,
+          questionText: `[Module 1 - Cap ${maxMarksPerMod}M] Formulate the asymptotic performance bounds and mathematical invariants governing foundational operations.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Rigorous derivation of complexity classes and formal invariant verification.',
+          explanation: `Module 1 allocation (${marksPerQ} Marks).`,
+        },
+        {
+          id: `${paperId}-q2`,
+          paperId,
+          questionNumber: 2,
+          questionText: `[Module 2 - Cap ${maxMarksPerMod}M] Compare and contrast divide-and-conquer vs greedy strategies. Formulate an optimal scheduling or traversal proof.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Proof of optimal substructure, greedy choice property, and inductive correctness.',
+          explanation: `Module 2 allocation (${marksPerQ} Marks).`,
+        },
+        {
+          id: `${paperId}-q3`,
+          paperId,
+          questionNumber: 3,
+          questionText: `[Module 3 - Cap ${maxMarksPerMod}M] Construct a state-space search tree or relational execution plan for a constrained optimization problem.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Complete state space formulation, bounding function definition, and search traversal.',
+          explanation: `Module 3 allocation (${marksPerQ} Marks).`,
+        },
+        {
+          id: `${paperId}-q4`,
+          paperId,
+          questionNumber: 4,
+          questionText: `[Module 4 - Cap ${maxMarksPerMod}M] Formulate the Dynamic Programming recurrence or Normalization decomposition for multi-stage processes.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Bellman recurrence or BCNF decomposition step with lossless join proof.',
+          explanation: `Module 4 allocation (${marksPerQ} Marks).`,
+        },
+        {
+          id: `${paperId}-q5`,
+          paperId,
+          questionNumber: 5,
+          questionText: `[Module 5 - Cap ${maxMarksPerMod}M] Analyze P vs NP classification, tractability limits, and approximation heuristics for NP-Complete problems.`,
+          type: 'short_answer',
+          marks: marksPerQ,
+          correctAnswer: 'Polynomial-time reduction mapping and approximation factor bound analysis.',
+          explanation: `Module 5 allocation (${marksPerQ} Marks).`,
+        },
+      ];
+    }
+
+    const calculatedTotalMarks = synthesizedQuestions.reduce((acc, q) => acc + q.marks, 0);
+
     const generatedPaper: PracticePaper = {
       id: paperId,
       courseId: course?.id || courseId,
       title: paperTitle,
-      description: `Syllabus-aligned ${isMidTerm ? 'Mid-Term (25M)' : 'End-Term (50M)'} practice exam. Zero MCQs, 100% descriptive rigor.`,
+      description: `Syllabus-aligned ${isMidTerm ? 'Mid-Term' : 'End-Term'} examination. [Marks/Q: ${marksPerQ}M · Max/Module: ${maxMarksPerMod}M]. Zero MCQs.`,
       durationMinutes: isMidTerm ? 60 : 120,
-      totalMarks: isMidTerm ? 25 : 50,
-      questionCount: isMidTerm ? 4 : 5,
+      totalMarks: calculatedTotalMarks,
+      questionCount: synthesizedQuestions.length,
       difficulty: isMidTerm ? 'medium' : 'hard',
       status: 'available',
-      questions: isMidTerm
-        ? [
-            {
-              id: `${paperId}-q1`,
-              paperId,
-              questionNumber: 1,
-              questionText: `Explain the fundamental architecture and core design paradigms of ${course?.title || 'the curriculum'}. Differentiate theoretical models from practical implementations.`,
-              type: 'short_answer',
-              marks: 6,
-              correctAnswer: 'Requires comprehensive definition of components, architectural layers, interface contracts, and trade-off analysis.',
-              explanation: 'Assesses Bloom Level 2 & 4: Understanding and Architectural Analysis.',
-            },
-            {
-              id: `${paperId}-q2`,
-              paperId,
-              questionNumber: 2,
-              questionText: 'Formulate the mathematical or algorithmic complexity bounds for standard operations in this domain. State all relevant boundary conditions.',
-              type: 'short_answer',
-              marks: 6,
-              correctAnswer: 'Requires exact asymptotic notations (Big-O, Omega, Theta), recurrence derivations, or algebraic proofs.',
-              explanation: 'Assesses analytical reasoning and complexity bounds.',
-            },
-            {
-              id: `${paperId}-q3`,
-              paperId,
-              questionNumber: 3,
-              questionText: 'Given a concurrent or distributed transaction scenario, illustrate how race conditions, data inconsistencies, or deadlocks are systematically avoided.',
-              type: 'short_answer',
-              marks: 6,
-              correctAnswer: 'Demonstrates protocol adherence (e.g. 2PL, Peterson algorithm, or ACID transaction guarantees).',
-              explanation: 'Tests state-space concurrency and synchronization primitives.',
-            },
-            {
-              id: `${paperId}-q4`,
-              paperId,
-              questionNumber: 4,
-              questionText: 'Design an end-to-end relational schema, data structure, or system component satisfying strict performance and normalization criteria.',
-              type: 'short_answer',
-              marks: 7,
-              correctAnswer: 'Complete design schema with entity constraints, functional dependency mapping, and decomposition verification.',
-              explanation: 'Assesses Bloom Level 6: Synthesis and System Design.',
-            },
-          ]
-        : [
-            {
-              id: `${paperId}-q1`,
-              paperId,
-              questionNumber: 1,
-              questionText: 'Module 1 (10M): Formulate the asymptotic performance bounds and mathematical invariants governing foundational operations.',
-              type: 'short_answer',
-              marks: 10,
-              correctAnswer: 'Rigorous derivation of complexity classes and formal invariant verification.',
-              explanation: 'Module 1 university syllabus 10-mark allocation.',
-            },
-            {
-              id: `${paperId}-q2`,
-              paperId,
-              questionNumber: 2,
-              questionText: 'Module 2 (10M): Compare and contrast divide-and-conquer vs greedy strategies. Formulate an optimal scheduling or sorting proof.',
-              type: 'short_answer',
-              marks: 10,
-              correctAnswer: 'Proof of optimal substructure, greedy choice property, and inductive correctness.',
-              explanation: 'Module 2 university syllabus 10-mark allocation.',
-            },
-            {
-              id: `${paperId}-q3`,
-              paperId,
-              questionNumber: 3,
-              questionText: 'Module 3 (10M): Construct a state-space search tree for a constrained optimization or backtracking problem (e.g., N-Queens or Peterson algorithm).',
-              type: 'short_answer',
-              marks: 10,
-              correctAnswer: 'Complete state space formulation, bounding function definition, and search traversal.',
-              explanation: 'Module 3 university syllabus 10-mark allocation.',
-            },
-            {
-              id: `${paperId}-q4`,
-              paperId,
-              questionNumber: 4,
-              questionText: 'Module 4 (10M): Formulate the Dynamic Programming or Normalization recurrence for multi-stage decision processes.',
-              type: 'short_answer',
-              marks: 10,
-              correctAnswer: 'Bellman recurrence or BCNF decomposition step with lossless join proof.',
-              explanation: 'Module 4 university syllabus 10-mark allocation.',
-            },
-            {
-              id: `${paperId}-q5`,
-              paperId,
-              questionNumber: 5,
-              questionText: 'Module 5 (10M): Analyze graph algorithms or concurrency protocols (Dijkstra, 2PL, or Banker algorithm) and prove correctness.',
-              type: 'short_answer',
-              marks: 10,
-              correctAnswer: 'Detailed execution trace, matrix state verification, and safety invariant proof.',
-              explanation: 'Module 5 university syllabus 10-mark allocation.',
-            },
-          ],
+      questions: synthesizedQuestions,
       attempts: [],
     };
 

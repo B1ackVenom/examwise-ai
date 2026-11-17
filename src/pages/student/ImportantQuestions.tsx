@@ -1,9 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import { ImportantQuestion } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { Modal } from '../../components/ui/Modal';
+import {
+  exportQuestionsToDoc,
+  exportQuestionsToMarkdown,
+  exportQuestionsToPdf,
+} from '../../utils/exportUtils';
 import {
   Search,
   Bookmark,
@@ -13,6 +18,9 @@ import {
   HelpCircle,
   Sparkles,
   Loader2,
+  FileText,
+  Printer,
+  FileCode,
 } from 'lucide-react';
 
 export const ImportantQuestions: React.FC = () => {
@@ -98,17 +106,41 @@ export const ImportantQuestions: React.FC = () => {
     }
   };
 
-  const handleExportCsv = () => {
-    const csvContent = apiClient.exportQuestionsCsv(filteredQuestions);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `ExamWise_Important_Questions_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    success(`Exported ${filteredQuestions.length} questions to CSV.`);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const activeCourseName = useMemo(() => {
+    if (selectedCourseId === 'all') return 'All Courses Combined';
+    const found = courses.find((c) => c.id === selectedCourseId);
+    return found ? `${found.code} - ${found.title}` : 'Engineering Curriculum';
+  }, [courses, selectedCourseId]);
+
+  const handleExportDoc = () => {
+    exportQuestionsToDoc(filteredQuestions, activeCourseName);
+    setIsExportMenuOpen(false);
+    success(`Exported ${filteredQuestions.length} questions to Word Document (.doc)`);
+  };
+
+  const handleExportMarkdown = () => {
+    exportQuestionsToMarkdown(filteredQuestions, activeCourseName);
+    setIsExportMenuOpen(false);
+    success(`Exported ${filteredQuestions.length} questions to Markdown (.md)`);
+  };
+
+  const handleExportPdf = () => {
+    exportQuestionsToPdf(filteredQuestions, activeCourseName);
+    setIsExportMenuOpen(false);
+    success(`Generating printable exam blueprint PDF...`);
   };
 
   return (
@@ -126,19 +158,63 @@ export const ImportantQuestions: React.FC = () => {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setIsGenerateModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-1.5 shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
             <span>Predict Questions (AI)</span>
           </button>
-          <button
-            onClick={handleExportCsv}
-            disabled={filteredQuestions.length === 0}
-            className="px-3 py-1.5 border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] disabled:opacity-40 text-[hsl(var(--foreground))] rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export (CSV)</span>
-          </button>
+
+          {/* Multi-format Export Menu: Doc, PDF, Markdown */}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              disabled={filteredQuestions.length === 0}
+              className="px-3 py-1.5 border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] disabled:opacity-40 text-[hsl(var(--foreground))] rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              aria-label="Export options"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Questions</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isExportMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-1 w-52 bg-[hsl(var(--popover))] text-[hsl(var(--popover-foreground))] rounded-xl shadow-xl border border-[hsl(var(--border))] py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                  Choose Export Format
+                </div>
+                <button
+                  onClick={handleExportDoc}
+                  className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  <div>
+                    <div className="font-semibold">Word Document (.doc)</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Full questions with model answers</div>
+                  </div>
+                </button>
+                <button
+                  onClick={handleExportPdf}
+                  className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 text-emerald-500" />
+                  <div>
+                    <div className="font-semibold">Printable Exam (PDF)</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Print-ready university layout</div>
+                  </div>
+                </button>
+                <button
+                  onClick={handleExportMarkdown}
+                  className="w-full px-3 py-2 text-left hover:bg-[hsl(var(--secondary))] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <FileCode className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <div className="font-semibold">Markdown (.md)</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Formatted GitHub study notes</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,26 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { TopNavigation } from './TopNavigation';
 import { FloatingDock } from './FloatingDock';
 import { CommandPalette } from './CommandPalette';
 import { ProfileModal } from './ProfileModal';
+import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 
 export const AppLayout: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      const isInput =
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable;
+
+      // ? Cheat sheet shortcut (when not typing in an input)
+      if (!isInput && e.key === '?' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
+        setIsShortcutsModalOpen(true);
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey) {
+        const key = e.key.toLowerCase();
+
+        // Ctrl + K: Command Palette
+        if (key === 'k') {
+          e.preventDefault();
+          setIsCommandPaletteOpen((prev) => !prev);
+        }
+        // Ctrl + D: Toggle / Pulse Quick Dock
+        else if (key === 'd') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('examwise:toggle-dock'));
+        }
+        // Ctrl + /: Shortcuts Help
+        else if (e.key === '/') {
+          e.preventDefault();
+          setIsShortcutsModalOpen((prev) => !prev);
+        }
+        // Ctrl + P: Jump to Practice Papers
+        else if (key === 'p') {
+          e.preventDefault();
+          navigate('/student/practice');
+        }
+        // Ctrl + Q: Jump to High-Yield Questions
+        else if (key === 'q') {
+          e.preventDefault();
+          navigate('/student/questions');
+        }
+        // Ctrl + N: Jump to Subject Notebooks
+        else if (key === 'n') {
+          e.preventDefault();
+          navigate('/student/courses');
+        }
+        // Ctrl + O: Jump to Overview / Hub
+        else if (key === 'o') {
+          e.preventDefault();
+          navigate('/student/overview');
+        }
+        // Ctrl + U: Switch Profile Modal
+        else if (key === 'u') {
+          e.preventDefault();
+          setIsProfileModalOpen((prev) => !prev);
+        }
       }
     };
+
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col transition-colors duration-200 selection:bg-[hsl(var(--primary)/0.2)] selection:text-[hsl(var(--accent-text))]">
@@ -62,6 +118,12 @@ export const AppLayout: React.FC = () => {
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+      />
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
     </div>
   );
