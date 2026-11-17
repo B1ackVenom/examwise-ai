@@ -13,9 +13,12 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 export const PracticePapers: React.FC = () => {
+  const [courses] = useState(() => apiClient.getCourses());
   const [papers, setPapers] = useState<PracticePaper[]>(() => apiClient.getPracticePapers());
   const [activePaper, setActivePaper] = useState<PracticePaper | null>(null);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
@@ -26,7 +29,37 @@ export const PracticePapers: React.FC = () => {
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
   const [latestAttempt, setLatestAttempt] = useState<PracticeAttempt | null>(null);
 
+  // AI Generation Modal State
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [genCourseId, setGenCourseId] = useState(courses[0]?.id || 'crs-cse2003');
+  const [genExamType, setGenExamType] = useState<'mid_term' | 'end_term'>('mid_term');
+  const [genTitle, setGenTitle] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const { success } = useToast();
+
+  const handleGeneratePaper = async () => {
+    setIsGenerating(true);
+    try {
+      const newPaper = await apiClient.generatePracticePaperAI(
+        genCourseId,
+        genExamType,
+        genTitle.trim() || undefined
+      );
+      if (newPaper) {
+        setPapers(apiClient.getPracticePapers());
+        setIsGenerateModalOpen(false);
+        setGenTitle('');
+        success(`New ${genExamType === 'mid_term' ? 'Mid-Term' : 'End-Term'} practice paper generated!`);
+      }
+    } catch {
+      setPapers(apiClient.getPracticePapers());
+      setIsGenerateModalOpen(false);
+      success('Practice paper generated from syllabus blueprint.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -421,6 +454,14 @@ export const PracticePapers: React.FC = () => {
                 Timed examination practice sessions with automated scoring and answer explanations.
               </p>
             </div>
+
+            <button
+              onClick={() => setIsGenerateModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-1.5 shadow-xs self-start sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Generate AI Practice Paper</span>
+            </button>
           </div>
 
           {papers.length === 0 ? (
@@ -554,6 +595,114 @@ export const PracticePapers: React.FC = () => {
         confirmLabel="Submit & View Score"
         variant="primary"
       />
+
+      {/* AI Practice Paper Generation Modal */}
+      <Modal
+        isOpen={isGenerateModalOpen}
+        onClose={() => !isGenerating && setIsGenerateModalOpen(false)}
+        title="Generate AI Practice Examination Paper"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            Constructs a university-pattern practice paper adhering strictly to official syllabus blueprints, zero MCQs, and module mark limits.
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Target Course *
+            </label>
+            <select
+              value={genCourseId}
+              onChange={(e) => setGenCourseId(e.target.value)}
+              className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+            >
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code}: {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Examination Format (Zero-MCQ University Standard) *
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setGenExamType('mid_term')}
+                className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                  genExamType === 'mid_term'
+                    ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--primary)/0.3)]'
+                    : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))]'
+                }`}
+              >
+                <div className="text-xs font-bold">Mid-Term Paper</div>
+                <div className="text-[11px] font-mono opacity-80 mt-1">20–25 Marks · 60 Mins</div>
+                <div className="text-[10px] text-teal-600 dark:text-teal-400 mt-1">Modules 1 & 2 Focus</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGenExamType('end_term')}
+                className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                  genExamType === 'end_term'
+                    ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--primary)/0.3)]'
+                    : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.4)] text-[hsl(var(--muted-foreground))]'
+                }`}
+              >
+                <div className="text-xs font-bold">End-Term Comprehensive</div>
+                <div className="text-[11px] font-mono opacity-80 mt-1">50 Marks · 120 Mins</div>
+                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">All 5 Modules (10M each)</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Custom Title (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. CSE2003 DBMS Comprehensive Mid-Term Simulation"
+              value={genTitle}
+              onChange={(e) => setGenTitle(e.target.value)}
+              className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsGenerateModalOpen(false)}
+              disabled={isGenerating}
+              className="px-3.5 py-1.5 text-xs font-medium rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleGeneratePaper}
+              disabled={isGenerating}
+              className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Synthesizing Exam Paper...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Generate Paper</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -169,6 +169,7 @@ async def list_practice_papers(
 
 
 @router.post("/practice-papers/generate", response_model=PracticePaperResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/practice/generate", response_model=PracticePaperResponse, status_code=status.HTTP_201_CREATED)
 async def generate_practice_paper(
     body: GeneratePracticePaperRequest,
     current_user: CurrentUser,

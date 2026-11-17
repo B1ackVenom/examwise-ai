@@ -24,4 +24,10 @@ backend/.coverage
 metadata.json
 bun.lock
 public/assets/aistudio/
+*.pptx
+build_presentation.py
+test_materials/CSE2003_RDBMS_Syllabus.pdf
+test_materials/CSE2004_OS_Syllabus.pdf
+test_materials/OS_Assignment.pdf
+test_materials/RDBMS_Question_Bank.pdf
 !.env.example

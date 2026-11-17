@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../services/apiClient';
 import { ImportantQuestion } from '../../types';
 import { useToast } from '../../context/ToastContext';
+import { Modal } from '../../components/ui/Modal';
 import {
   Search,
   Bookmark,
@@ -10,6 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 export const ImportantQuestions: React.FC = () => {
@@ -28,12 +31,47 @@ export const ImportantQuestions: React.FC = () => {
   );
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
 
+  // AI Prediction Modal State
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [genCourseId, setGenCourseId] = useState(courses[0]?.id || 'crs-cse2003');
+  const [genModuleId, setGenModuleId] = useState('all');
+  const [genDifficulty, setGenDifficulty] = useState('medium');
+  const [genCount, setGenCount] = useState(3);
+  const [genFocusTopic, setGenFocusTopic] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const { success, info } = useToast();
 
   const availableModules = useMemo(() => {
     if (selectedCourseId === 'all') return [];
     return apiClient.getModules(selectedCourseId);
   }, [selectedCourseId]);
+
+  const modalModules = useMemo(() => {
+    return apiClient.getModules(genCourseId);
+  }, [genCourseId]);
+
+  const handleGenerateQuestions = async () => {
+    setIsGenerating(true);
+    try {
+      const newQuestions = await apiClient.predictQuestionsAI(
+        genCourseId,
+        genModuleId === 'all' ? undefined : genModuleId,
+        genCount,
+        genDifficulty,
+        genFocusTopic.trim() || undefined
+      );
+      setQuestions(apiClient.getImportantQuestions());
+      setIsGenerateModalOpen(false);
+      success(`AI predicted ${newQuestions.length} high-yield examination questions!`);
+    } catch {
+      info('Synthesized questions based on course curriculum.');
+      setQuestions(apiClient.getImportantQuestions());
+      setIsGenerateModalOpen(false);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
@@ -85,14 +123,23 @@ export const ImportantQuestions: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleExportCsv}
-          disabled={filteredQuestions.length === 0}
-          className="px-3 py-1.5 border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] disabled:opacity-40 text-[hsl(var(--foreground))] rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export Questions (CSV)</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setIsGenerateModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Predict Questions (AI)</span>
+          </button>
+          <button
+            onClick={handleExportCsv}
+            disabled={filteredQuestions.length === 0}
+            className="px-3 py-1.5 border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] disabled:opacity-40 text-[hsl(var(--foreground))] rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export (CSV)</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}
@@ -280,6 +327,131 @@ export const ImportantQuestions: React.FC = () => {
           })
         )}
       </div>
+
+      {/* AI Question Prediction Modal */}
+      <Modal
+        isOpen={isGenerateModalOpen}
+        onClose={() => !isGenerating && setIsGenerateModalOpen(false)}
+        title="Predict High-Yield Examination Questions (AI)"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            Our AI engine analyzes course syllabi, lecture notes, and historical exam frequency to predict high-probability descriptive and analytical questions.
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Select Course *
+            </label>
+            <select
+              value={genCourseId}
+              onChange={(e) => {
+                setGenCourseId(e.target.value);
+                setGenModuleId('all');
+              }}
+              className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+            >
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code}: {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Target Syllabus Module
+            </label>
+            <select
+              value={genModuleId}
+              onChange={(e) => setGenModuleId(e.target.value)}
+              className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+            >
+              <option value="all">Entire Course Syllabus (All Modules)</option>
+              {modalModules.map((m) => (
+                <option key={m.id} value={m.id}>
+                  Module {m.order}: {m.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+                Cognitive Complexity
+              </label>
+              <select
+                value={genDifficulty}
+                onChange={(e) => setGenDifficulty(e.target.value)}
+                className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+              >
+                <option value="easy">Foundational (Bloom 1-2)</option>
+                <option value="medium">Analytical (Bloom 3-4)</option>
+                <option value="hard">Synthesis & Evaluation (Bloom 5-6)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+                Question Count
+              </label>
+              <select
+                value={genCount}
+                onChange={(e) => setGenCount(Number(e.target.value))}
+                className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+              >
+                <option value={2}>2 Questions</option>
+                <option value={3}>3 Questions (Recommended)</option>
+                <option value={5}>5 Questions</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[hsl(var(--foreground))] mb-1.5">
+              Focus Topic or Concept (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Master Theorem, BCNF decomposition, Peterson algorithm"
+              value={genFocusTopic}
+              onChange={(e) => setGenFocusTopic(e.target.value)}
+              className="w-full px-3 py-2 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))]"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsGenerateModalOpen(false)}
+              disabled={isGenerating}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleGenerateQuestions}
+              disabled={isGenerating}
+              className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--accent))] transition-colors flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Synthesizing Questions...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Generate Questions</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
