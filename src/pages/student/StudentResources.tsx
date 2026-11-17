@@ -99,8 +99,34 @@ export const StudentResources: React.FC = () => {
     setResourceToDelete(null);
   };
 
-  const handleDownload = (title: string) => {
-    info(`Preparing "${title}" for download.`);
+  const handleDownload = (res: LearningResource) => {
+    const course = courses.find((c) => c.id === res.courseId);
+    const content = `# ${res.title}
+Course: ${course ? `${course.code} - ${course.title}` : res.courseId}
+Module: ${res.moduleId}
+Format: ${res.type.toUpperCase()} (${res.fileSize})
+Uploaded by: ${res.uploadedBy} on ${res.uploadedAt}
+${res.tags.length > 0 ? `Tags: ${res.tags.join(', ')}\n` : ''}
+---
+
+## Syllabus & Resource Notes
+
+${res.description}
+
+---
+*Generated & downloaded from ExamWise AI Learning Resource Repository*
+`;
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const cleanFileName = res.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `${cleanFileName}_notes.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    success(`Downloaded "${res.title}" study resource.`);
   };
 
   return (
@@ -276,8 +302,8 @@ export const StudentResources: React.FC = () => {
 
                   <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[hsl(var(--border))]">
                     <button
-                      onClick={() => handleDownload(res.title)}
-                      className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] rounded-lg transition-colors"
+                      onClick={() => handleDownload(res)}
+                      className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] rounded-lg transition-colors cursor-pointer"
                       title="Download resource"
                     >
                       <Download className="w-4 h-4" />

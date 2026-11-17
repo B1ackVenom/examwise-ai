@@ -257,19 +257,26 @@ export const PracticePapers: React.FC = () => {
                 </div>
               )}
 
-              {currentQuestion.type === 'short_answer' && (
+              {currentQuestion.type !== 'mcq' && (
                 <div className="space-y-2 pt-2">
-                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">
-                    Response:
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[hsl(var(--foreground))]">
+                      Your Descriptive / Mathematical Solution:
+                    </label>
+                    <span className="text-[11px] font-mono text-[hsl(var(--accent-text))]">
+                      Max {currentQuestion.marks} Marks
+                    </span>
+                  </div>
                   <textarea
-                    rows={5}
+                    rows={6}
+                    placeholder="Type your comprehensive theoretical explanation, mathematical derivation, or solution step-by-step..."
                     value={String(userAnswers[currentQuestion.id] || '')}
                     onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                    className="w-full p-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))]"
+                    className="w-full p-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--input))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--ring))] leading-relaxed"
                   />
-                  <div className="text-[11px] text-[hsl(var(--muted-foreground))]">
-                    Character count: {String(userAnswers[currentQuestion.id] || '').length}
+                  <div className="flex items-center justify-between text-[11px] text-[hsl(var(--muted-foreground))]">
+                    <span>Character count: {String(userAnswers[currentQuestion.id] || '').length}</span>
+                    <span>University standard structured format</span>
                   </div>
                 </div>
               )}
@@ -473,13 +480,26 @@ export const PracticePapers: React.FC = () => {
                   )}
 
                   {!isMcq && (
-                    <div className="p-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--border))] rounded-lg text-xs space-y-1">
-                      <div className="font-semibold text-[hsl(var(--foreground))]">
-                        Your Submitted Response:
+                    <div className="space-y-2">
+                      <div className="p-3 bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--border))] rounded-lg text-xs space-y-1">
+                        <div className="font-semibold text-[hsl(var(--foreground))]">
+                          Your Submitted Response:
+                        </div>
+                        <p className="text-[hsl(var(--muted-foreground))] italic">
+                          "{String(userAnswer || 'No response recorded.')}"
+                        </p>
                       </div>
-                      <p className="text-[hsl(var(--muted-foreground))] italic">
-                        "{String(userAnswer || 'No response recorded.')}"
-                      </p>
+
+                      {q.correctAnswer && (
+                        <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-lg text-xs space-y-1">
+                          <div className="font-semibold text-teal-700 dark:text-teal-300">
+                            Expected Benchmark / Model Answer Key:
+                          </div>
+                          <p className="text-[hsl(var(--foreground))] leading-relaxed">
+                            {String(q.correctAnswer)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 

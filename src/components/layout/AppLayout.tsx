@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useRole } from '../../context/RoleContext';
 import { TopNavigation } from './TopNavigation';
 import { FloatingDock } from './FloatingDock';
 import { CommandPalette } from './CommandPalette';
@@ -8,6 +9,7 @@ import { ProfileModal } from './ProfileModal';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 
 export const AppLayout: React.FC = () => {
+  const { role } = useRole();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
@@ -46,37 +48,60 @@ export const AppLayout: React.FC = () => {
           e.preventDefault();
           setIsShortcutsModalOpen((prev) => !prev);
         }
-        // Ctrl + P: Jump to Practice Papers
-        else if (key === 'p') {
-          e.preventDefault();
-          navigate('/student/practice');
-        }
-        // Ctrl + Q: Jump to High-Yield Questions
-        else if (key === 'q') {
-          e.preventDefault();
-          navigate('/student/questions');
-        }
-        // Ctrl + N: Jump to Subject Notebooks
-        else if (key === 'n') {
-          e.preventDefault();
-          navigate('/student/courses');
-        }
-        // Ctrl + O: Jump to Overview / Hub
-        else if (key === 'o') {
-          e.preventDefault();
-          navigate('/student/overview');
-        }
         // Ctrl + U: Switch Profile Modal
         else if (key === 'u') {
           e.preventDefault();
           setIsProfileModalOpen((prev) => !prev);
+        }
+        // Role-Specific Navigation Shortcuts
+        else if (role === 'teacher') {
+          if (key === 'o') {
+            e.preventDefault();
+            navigate('/teacher/overview');
+          } else if (key === 'e') {
+            e.preventDefault();
+            navigate('/teacher/evaluation');
+          } else if (key === 'm') {
+            e.preventDefault();
+            navigate('/teacher/marksheets');
+          } else if (key === 'b') {
+            e.preventDefault();
+            navigate('/teacher/exam-builder');
+          } else if (key === 'r') {
+            e.preventDefault();
+            navigate('/teacher/results');
+          } else if (key === 'c') {
+            e.preventDefault();
+            navigate('/teacher/courses');
+          }
+        } else {
+          // Student shortcuts
+          if (key === 'o') {
+            e.preventDefault();
+            navigate('/student/overview');
+          } else if (key === 'p') {
+            e.preventDefault();
+            navigate('/student/practice');
+          } else if (key === 'q') {
+            e.preventDefault();
+            navigate('/student/questions');
+          } else if (key === 'n') {
+            e.preventDefault();
+            navigate('/student/courses');
+          } else if (key === 'h') {
+            e.preventDefault();
+            navigate('/student/resources');
+          } else if (key === 'a') {
+            e.preventDefault();
+            navigate('/student/analytics');
+          }
         }
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [navigate]);
+  }, [navigate, role]);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col transition-colors duration-200 selection:bg-[hsl(var(--primary)/0.2)] selection:text-[hsl(var(--accent-text))]">
